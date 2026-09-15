@@ -358,6 +358,37 @@
     }
   }
 
+  function initHeroSlider() {
+    qsa(".hero-slider").forEach(function (slider) {
+      var slides = qsa(".hero-slide", slider);
+      var dots = qsa(".hero-slider-dot", slider);
+      if (slides.length < 2) return;
+      var index = 0;
+      var interval = parseInt(slider.dataset.autoplay, 10) || 5000;
+      var timer = null;
+
+      function show(i) {
+        index = (i + slides.length) % slides.length;
+        slides.forEach(function (s, j) { s.classList.toggle("is-active", j === index); });
+        dots.forEach(function (d, j) { d.classList.toggle("is-active", j === index); });
+      }
+      function restart() {
+        if (timer) clearInterval(timer);
+        timer = setInterval(function () { show(index + 1); }, interval);
+      }
+
+      var prev = qs(".hero-slider-arrow.prev", slider);
+      var next = qs(".hero-slider-arrow.next", slider);
+      if (prev) prev.addEventListener("click", function () { show(index - 1); restart(); });
+      if (next) next.addEventListener("click", function () { show(index + 1); restart(); });
+      dots.forEach(function (d, j) {
+        d.addEventListener("click", function () { show(j); restart(); });
+      });
+
+      restart();
+    });
+  }
+
   function initEquipmentCarousels() {
     qsa(".equip-carousel").forEach(function (car) {
       var count = parseInt(car.dataset.count, 10) || 0;
@@ -439,6 +470,7 @@
     initLocationSelector();
     initLocationPill();
     initRuDisclaimer();
+    initHeroSlider();
     initEquipmentCarousels();
     initGoogleReviewsWidgets();
   });

@@ -141,8 +141,6 @@
 
   // ---------------------------------------------------------------- like / heart widget (replaces star rating)
   function initLikeWidgets() {
-    var lang = document.documentElement.lang === "ru" ? "ru" : "uk";
-    var likedText = lang === "ru" ? "Спасибо за оценку!" : "Дякуємо за оцінку!";
     qsa(".like-widget").forEach(function (btn) {
       btn.addEventListener("click", function (e) {
         e.preventDefault();
@@ -154,7 +152,10 @@
           if (countEl) countEl.textContent = liked ? base + 1 : base;
         } else {
           var labelEl = qs(".like-label", btn);
-          if (labelEl) labelEl.textContent = liked ? likedText : "";
+          var defaultLabel = btn.dataset.defaultLabel || "";
+          var likedLabel = btn.dataset.likedLabel || defaultLabel;
+          if (labelEl) labelEl.textContent = liked ? likedLabel : defaultLabel;
+          btn.setAttribute("aria-label", liked ? likedLabel : defaultLabel);
         }
       });
     });
@@ -362,14 +363,12 @@
       var count = parseInt(car.dataset.count, 10) || 0;
       if (!count) return;
       var slides = qsa(".equip-slide", car);
-      var current = qs(".equip-counter-current", car);
       var index = 0;
       function show(i) {
         index = (i + count) % count;
         slides.forEach(function (s, j) {
           s.classList.toggle("active", j === index);
         });
-        if (current) current.textContent = index + 1;
       }
       var prev = qs(".equip-nav.prev", car);
       var next = qs(".equip-nav.next", car);

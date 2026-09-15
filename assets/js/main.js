@@ -139,21 +139,23 @@
     });
   }
 
-  // ---------------------------------------------------------------- star rating
-  function initStarRating() {
-    qsa(".star-rate").forEach(function (rate) {
-      var stars = qsa(".star-btn", rate);
-      var thanks = qs(".star-thanks", rate);
-      var lang = document.documentElement.lang === "en" ? "en" : "uk";
-      stars.forEach(function (star) {
-        star.addEventListener("click", function () {
-          var val = parseInt(star.dataset.val, 10);
-          rate.dataset.rated = val;
-          stars.forEach(function (s) {
-            s.classList.toggle("filled", parseInt(s.dataset.val, 10) <= val);
-          });
-          if (thanks) thanks.textContent = lang === "en" ? "Thank you for your rating!" : "Дякуємо за оцінку!";
-        });
+  // ---------------------------------------------------------------- like / heart widget (replaces star rating)
+  function initLikeWidgets() {
+    var lang = document.documentElement.lang === "ru" ? "ru" : "uk";
+    var likedText = lang === "ru" ? "Спасибо за оценку!" : "Дякуємо за оцінку!";
+    qsa(".like-widget").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var liked = btn.classList.toggle("liked");
+        if (btn.dataset.mode === "counter") {
+          var base = parseInt(btn.dataset.count, 10) || 0;
+          var countEl = qs(".like-count", btn);
+          if (countEl) countEl.textContent = liked ? base + 1 : base;
+        } else {
+          var labelEl = qs(".like-label", btn);
+          if (labelEl) labelEl.textContent = liked ? likedText : "";
+        }
       });
     });
   }
@@ -329,6 +331,100 @@
     }
   }
 
+  // ---------------------------------------------------------------- RU disclaimer (Law on Language, Art. 30)
+  function initRuDisclaimer() {
+    var overlay = qs("#ru-disclaimer");
+    if (!overlay) return;
+    var uaHref = overlay.getAttribute("data-ua-href");
+    var seconds = parseInt(overlay.getAttribute("data-seconds"), 10) || 30;
+    var countEl = qs("#ru-disclaimer-count", overlay);
+    var stayBtn = qs("#ru-disclaimer-stay", overlay);
+    overlay.classList.add("show");
+    var remaining = seconds;
+    var timer = setInterval(function () {
+      remaining -= 1;
+      if (countEl) countEl.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(timer);
+        if (uaHref) window.location.href = uaHref;
+      }
+    }, 1000);
+    if (stayBtn) {
+      stayBtn.addEventListener("click", function () {
+        clearInterval(timer);
+        overlay.classList.remove("show");
+      });
+    }
+  }
+
+  function initEquipmentCarousels() {
+    qsa(".equip-carousel").forEach(function (car) {
+      var count = parseInt(car.dataset.count, 10) || 0;
+      if (!count) return;
+      var slides = qsa(".equip-slide", car);
+      var current = qs(".equip-counter-current", car);
+      var index = 0;
+      function show(i) {
+        index = (i + count) % count;
+        slides.forEach(function (s, j) {
+          s.classList.toggle("active", j === index);
+        });
+        if (current) current.textContent = index + 1;
+      }
+      var prev = qs(".equip-nav.prev", car);
+      var next = qs(".equip-nav.next", car);
+      if (prev) prev.addEventListener("click", function () { show(index - 1); });
+      if (next) next.addEventListener("click", function () { show(index + 1); });
+      show(0);
+    });
+  }
+
+  function initGoogleReviewsWidgets() {
+    qsa(".grw-widget").forEach(function (widget) {
+      var track = qs(".grw-track", widget);
+      var slides = qsa(".grw-slide", track);
+      if (!track || !slides.length) return;
+      var section = widget.closest("section");
+      var dots = section ? qsa(".grw-dot", section) : [];
+      var prev = qs(".grw-arrow.prev", widget);
+      var next = qs(".grw-arrow.next", widget);
+
+      // offsetLeft isn't reliably relative to `track` (its offsetParent may be
+      // an ancestor further up), so measure with getBoundingClientRect instead
+      // and convert to a scrollLeft-space position explicitly.
+      function slidePos(el) {
+        return el.getBoundingClientRect().left - track.getBoundingClientRect().left + track.scrollLeft;
+      }
+      function scrollToIndex(i) {
+        i = Math.max(0, Math.min(slides.length - 1, i));
+        track.scrollTo({ left: slidePos(slides[i]), behavior: "smooth" });
+      }
+      function nearestIndex() {
+        var pos = track.scrollLeft;
+        var best = 0, bestDist = Infinity;
+        slides.forEach(function (s, i) {
+          var d = Math.abs(slidePos(s) - pos);
+          if (d < bestDist) { bestDist = d; best = i; }
+        });
+        return best;
+      }
+      function syncDots() {
+        var idx = nearestIndex();
+        dots.forEach(function (d, i) { d.classList.toggle("active", i === idx); });
+      }
+      if (prev) prev.addEventListener("click", function () { scrollToIndex(nearestIndex() - 1); });
+      if (next) next.addEventListener("click", function () { scrollToIndex(nearestIndex() + 1); });
+      dots.forEach(function (dot, i) {
+        dot.addEventListener("click", function () { scrollToIndex(i); });
+      });
+      var scrollTimer;
+      track.addEventListener("scroll", function () {
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(syncDots, 100);
+      });
+    });
+  }
+
   // ---------------------------------------------------------------- init
   document.addEventListener("DOMContentLoaded", function () {
     initMobileNav();
@@ -337,11 +433,14 @@
     initFilters();
     initTabs();
     initModals();
-    initStarRating();
+    initLikeWidgets();
     initRadioRows();
     initBooking();
     initContactForm();
     initLocationSelector();
     initLocationPill();
+    initRuDisclaimer();
+    initEquipmentCarousels();
+    initGoogleReviewsWidgets();
   });
 })();

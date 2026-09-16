@@ -408,6 +408,15 @@ h4,.h4{ font-family:var(--font-body); font-weight:600; font-size:1.05rem; }
 .equip-nav:hover{ background:#fff; }
 .rotate-180{ transform:rotate(180deg); }
 
+/* equipment details (below the carousel, target of the "Читати далі" anchor) */
+#equipment-details{ scroll-margin-top:100px; }
+.equip-detail-card{ background:#fff; border-radius:var(--radius-m); padding:26px; height:100%; }
+.equip-detail-icon{
+  width:44px; height:44px; border-radius:11px; background:var(--accent-tint); color:var(--accent);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.branch-children .equip-detail-icon{ background:var(--warm-tint); color:var(--warm); }
+
 /* testimonials (generic highlight-box component, reused well beyond testimonials) */
 .testi-card{ background:var(--paper-2); border-radius:var(--radius-m); padding:26px; height:100%; }
 
